@@ -1,0 +1,109 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flatcuties</title>
+    <link rel="stylesheet" type="text/css" href="./index.css">
+</head>
+<body>
+    <div id="character-bar">
+        <ul id="animal-list">
+            <!-- Animal names will be dynamically added here -->
+        </ul>
+    </div>
+    <div class="characterinfo">
+        <div id="detailed-info">
+            <p id="name">Character's name</p>
+            <img id="image" src="" alt="Character's image"/>
+            <h3>Total Votes: <span id="votes">0</span></h3>
+            <button id="vote-button">Vote</button>
+        </div>
+        <div id="animal-details">
+            <!-- Details will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        // Include your JavaScript code here
+        const animalListElement = document.getElementById('animal-list');
+        const nameElement = document.getElementById('name');
+        const imageElement = document.getElementById('image');
+        const votesElement = document.getElementById('votes');
+        const voteButton = document.getElementById('vote-button');
+        let currentAnimalId;
+
+        // Function to update the displayed animal details
+        function updateAnimalDetails(animal) {
+            nameElement.textContent = `Name: ${animal.name}`;
+            imageElement.src = animal.image;
+            votesElement.textContent = `Total Votes: ${animal.votes}`;
+            currentAnimalId = animal.id;
+        }
+
+        // Function to make a GET request for animal details by ID
+        function fetchAnimalDetails(animalId) {
+            fetch(`http://localhost:3000/characters/${animalId}`)
+                .then(response => response.json())
+                .then(data => {
+                    updateAnimalDetails(data);
+                })
+                .catch(error => {
+                    console.error('Error fetching animal details:', error);
+                });
+        }
+
+        // Function to make a PATCH request to vote for an animal
+        function voteForAnimal(animalId) {
+            fetch(`http://localhost:3000/characters/${animalId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ votes: parseInt(votesElement.textContent) + 1 }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    updateAnimalDetails(data);
+                })
+                .catch(error => {
+                    console.error('Error voting for the animal:', error);
+                });
+        }
+
+        // Add event listener for animal names
+        animalListElement.addEventListener('click', event => {
+            if (event.target.tagName === 'LI') {
+                const animalId = event.target.getAttribute('data-id');
+                fetchAnimalDetails(animalId);
+            }
+        });
+
+        // Add event listener for voting
+        voteButton.addEventListener('click', () => {
+            voteForAnimal(currentAnimalId);
+        });
+
+        // Function to make a GET request for the list of animals
+        function fetchAnimalList() {
+            fetch('http://localhost:3000/characters')
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(animal => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = animal.name;
+                        listItem.setAttribute('data-id', animal.id);
+                        animalListElement.appendChild(listItem);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching animal names:', error);
+                });
+        }
+
+        // Fetch the initial list of animals
+        fetchAnimalList();
+    </script>
+</body>
+</html>
